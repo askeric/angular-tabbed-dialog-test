@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed } from '@angular/core';
+import { Component, computed, signal } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
 
@@ -21,26 +21,47 @@ function futureDate(control: AbstractControl): ValidationErrors | null {
 export class Tab2Component implements IEditDispatchOrderTab {
   public readonly form: FormGroup;
   private originalValue: Record<string, any> = {};
+  
+  // Convert form state to signals so computed signals can track them
+  private readonly formValue = signal<Record<string, any>>({});
+  private readonly formValid = signal(false);
 
-  // SCALABLE - works with any number of fields automatically!
+  // Now these will react to form changes!
   readonly hasChanges = computed(() => {
-    const current = this.form.value as Record<string, any>;
+    const current = this.formValue();
     return Object.keys(current).some(key => current[key] !== this.originalValue[key]);
   });
   
-  readonly isValid = computed(() => this.form.valid);
+  readonly isValid = computed(() => this.formValid());
 
   constructor(private fb: FormBuilder) {
     this.form = this.fb.group({
       field3: ['', [Validators.required, Validators.minLength(10)]],
       field4: ['', [Validators.required, futureDate]]
     });
+    
+    // Subscribe to form changes and update signals
+    this.form.valueChanges.subscribe(value => {
+      this.formValue.set(value);
+    });
+    
+    this.form.statusChanges.subscribe(() => {
+      this.formValid.set(this.form.valid);
+    });
+    
+    // Initialize signals
+    this.formValue.set(this.form.value);
+    this.formValid.set(this.form.valid);
   }
   
   public loadData(field3: string, field4: string) {
     const data = { field3, field4 };
     this.form.patchValue(data);
     this.originalValue = { ...data };
+    
+    // Update signals after loading data
+    this.formValue.set(this.form.value);
+    this.formValid.set(this.form.valid);
   }
   
   public async save(): Promise<void> {
@@ -52,5 +73,6 @@ export class Tab2Component implements IEditDispatchOrderTab {
     await new Promise(resolve => setTimeout(resolve, 800));
     
     this.originalValue = { ...this.form.value };
+    this.formValue.set(this.form.value); // Update signal after save
   }
 }

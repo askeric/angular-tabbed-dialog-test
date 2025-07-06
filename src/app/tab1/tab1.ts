@@ -55,15 +55,18 @@ export class Tab1Component implements IEditDispatchOrderTab {
     this.formValid.set(this.form.valid);
   }
   
-  public async save(): Promise<void> {
-    if (!this.isValid()) {
-      throw new Error('Cannot save invalid data');
-    }
-    
-    console.log('Saving Tab1:', this.form.value);
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    this.originalValue = { ...this.form.value };
-    this.formValue.set(this.form.value); // Update signal after save
+public async save(): Promise<void> {
+  if (!this.isValid()) {
+    throw new Error('Cannot save invalid data');
   }
+  
+  console.log('Saving Tab1:', this.form.value);
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  // Update original value to mark as "clean"
+  this.originalValue = { ...this.form.value };
+  
+  // Force signal update with new object reference (critical for change detection)
+  this.formValue.set({ ...this.form.value });
+}
 }

@@ -72,7 +72,10 @@ export class Tab2Component implements IEditDispatchOrderTab {
     console.log('Saving Tab2:', this.form.value);
     await new Promise(resolve => setTimeout(resolve, 800));
     
+    // Update original value to mark as "clean"
     this.originalValue = { ...this.form.value };
-    this.formValue.set(this.form.value); // Update signal after save
+    
+    // Force signal update with new object reference (critical for change detection)
+    this.formValue.set({ ...this.form.value });
   }
 }

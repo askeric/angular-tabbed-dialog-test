@@ -1,1 +1,98 @@
-<p>dialog works!</p>
+ <div class="dialog-container">
+      <div class="dialog-header">
+        <h2>Edit Dispatch Order</h2>
+        <button class="close-btn" (click)="onClose()">&times;</button>
+      </div>
+      
+      <div class="dialog-body">
+        <div class="tab-container">
+          <div class="tab-headers">
+            <button 
+              class="tab-header" 
+              [class.active]="activeTabId() === 'tab1'"
+              [class.has-changes]="tab1?.hasChanges()"
+              [class.has-errors]="tab1 && !tab1.isValid()"
+              (click)="setActiveTab('tab1')">
+              Tab 1
+              @if (tab1?.hasChanges()) {
+                <span class="change-indicator">●</span>
+              }
+              @if (tab1 && !tab1.isValid()) {
+                <span class="error-indicator">⚠</span>
+              }
+            </button>
+            
+            <button 
+              class="tab-header" 
+              [class.active]="activeTabId() === 'tab2'"
+              [class.has-changes]="tab2?.hasChanges()"
+              [class.has-errors]="tab2 && !tab2.isValid()"
+              (click)="setActiveTab('tab2')">
+              Tab 2
+              @if (tab2?.hasChanges()) {
+                <span class="change-indicator">●</span>
+              }
+              @if (tab2 && !tab2.isValid()) {
+                <span class="error-indicator">⚠</span>
+              }
+            </button>
+          </div>
+          
+          <div class="tab-content">
+            <!-- Always render both tabs but show/hide them -->
+            <div class="tab-panel" [style.display]="activeTabId() === 'tab1' ? 'block' : 'none'">
+              <app-tab1 #tab1Ref></app-tab1>
+            </div>
+            
+            <div class="tab-panel" [style.display]="activeTabId() === 'tab2' ? 'block' : 'none'">
+              <app-tab2 #tab2Ref></app-tab2>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="dialog-footer">
+        <div class="status-info">
+          <div class="status-row">
+            @if (tabsWithChangesCount() > 0) {
+              <span class="changes-count">
+                {{ tabsWithChangesCount() }} tab(s) with changes
+              </span>
+            }
+          </div>
+          <div class="status-row">
+            @if (!canSave() && tabsWithChangesCount() > 0) {
+              <span class="error-message">
+                Cannot save: some tabs have validation errors
+              </span>
+            }
+            @if (canSave() && tabsWithChangesCount() > 0) {
+              <span class="success-message">
+                Ready to save {{ tabsWithChangesCount() }} tab(s)
+              </span>
+            }
+          </div>
+        </div>
+        
+        <div class="action-buttons">
+          <button class="btn btn-secondary" (click)="onClose()">
+            Cancel
+          </button>
+
+          <div style="background: yellow; padding: 5px; font-size: 12px; margin-bottom: 5px;">
+            TAB1: hasChanges={{ tab1?.hasChanges() }}, isValid={{ tab1?.isValid() }}<br>
+            TAB2: hasChanges={{ tab2?.hasChanges() }}, isValid={{ tab2?.isValid() }}<br>
+            COMPUTED: changes={{ tabsWithChangesCount() }}, canSave={{ canSave() }}
+          </div>
+          <button 
+            class="btn btn-primary"
+            [disabled]="!canSave()"
+            (click)="onSave()"
+            style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;"
+            [style.background]="canSave() ? '#007bff' : '#6c757d'"
+            [style.opacity]="canSave() ? '1' : '0.6'">
+            {{ isSaving() ? 'Saving...' : 'Save All Changes' }}
+          </button>
+        </div>
+      </div>
+    </div>

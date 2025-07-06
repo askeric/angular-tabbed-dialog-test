@@ -4,37 +4,7 @@ import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
 
 @Component({
   selector: 'app-tab1',
-  template: `
-    <form>
-      <div class="form-group">
-        <label for="field1">Field 1</label>
-        <input 
-          id="field1" 
-          type="text" 
-          [value]="field1()"
-          (input)="onField1Change($event)"
-          [class.error]="field1Error()"
-          class="form-control">
-        @if (field1Error()) {
-          <div class="error-message">{{ field1Error() }}</div>
-        }
-      </div>
-      
-      <div class="form-group">
-        <label for="field2">Field 2</label>
-        <input 
-          id="field2" 
-          type="text" 
-          [value]="field2()"
-          (input)="onField2Change($event)"
-          [class.error]="field2Error()"
-          class="form-control">
-        @if (field2Error()) {
-          <div class="error-message">{{ field2Error() }}</div>
-        }
-      </div>
-    </form>
-  `,
+  templateUrl: 'tab1.html',
   standalone: true,
   imports: [CommonModule]
 })

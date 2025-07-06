@@ -5,37 +5,7 @@ import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
 
 @Component({
   selector: 'app-tab2',
-  template: `
-    <form>
-      <div class="form-group">
-        <label for="field3">Field 3</label>
-        <textarea 
-          id="field3" 
-          [value]="field3()"
-          (input)="onField3Change($event)"
-          [class.error]="field3Error()"
-          class="form-control"
-          rows="3"></textarea>
-        @if (field3Error()) {
-          <div class="error-message">{{ field3Error() }}</div>
-        }
-      </div>
-      
-      <div class="form-group">
-        <label for="field4">Field 4</label>
-        <input 
-          id="field4" 
-          type="date" 
-          [value]="field4()"
-          (input)="onField4Change($event)"
-          [class.error]="field4Error()"
-          class="form-control">
-        @if (field4Error()) {
-          <div class="error-message">{{ field4Error() }}</div>
-        }
-      </div>
-    </form>
-  `,
+  templateUrl: 'tab2.html',
   standalone: true,
   imports: [CommonModule]
 })

@@ -1,11 +1,12 @@
 import { CommonModule } from '@angular/common';
-import { AfterViewInit, Component, OnInit, signal, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, OnInit, signal, ViewChild, computed, ChangeDetectionStrategy } from '@angular/core';
 import { Tab1Component } from '../tab1/tab1';
 import { Tab2Component } from '../tab2/tab2';
 import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
 
 @Component({
   selector: 'app-dialog',
+  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     <div class="dialog-container">
       <div class="dialog-header">
@@ -63,21 +64,21 @@ import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
       <div class="dialog-footer">
         <div class="status-info">
           <div class="status-row">
-            @if (getChangesCount() > 0) {
+            @if (tabsWithChangesCount() > 0) {
               <span class="changes-count">
-                {{ getChangesCount() }} tab(s) with changes
+                {{ tabsWithChangesCount() }} tab(s) with changes
               </span>
             }
           </div>
           <div class="status-row">
-            @if (!getCanSave() && getChangesCount() > 0) {
+            @if (!canSave() && tabsWithChangesCount() > 0) {
               <span class="error-message">
                 Cannot save: some tabs have validation errors
               </span>
             }
-            @if (getCanSave() && getChangesCount() > 0) {
+            @if (canSave() && tabsWithChangesCount() > 0) {
               <span class="success-message">
-                Ready to save {{ getChangesCount() }} tab(s)
+                Ready to save {{ tabsWithChangesCount() }} tab(s)
               </span>
             }
           </div>
@@ -91,15 +92,15 @@ import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
           <div style="background: yellow; padding: 5px; font-size: 12px; margin-bottom: 5px;">
             TAB1: hasChanges={{ tab1?.hasChanges() }}, isValid={{ tab1?.isValid() }}<br>
             TAB2: hasChanges={{ tab2?.hasChanges() }}, isValid={{ tab2?.isValid() }}<br>
-            COMPUTED: changes={{ getChangesCount() }}, canSave={{ getCanSave() }}
+            COMPUTED: changes={{ tabsWithChangesCount() }}, canSave={{ canSave() }}
           </div>
           <button 
             class="btn btn-primary"
-            [disabled]="!getCanSave()"
+            [disabled]="!canSave()"
             (click)="onSave()"
             style="padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; font-size: 14px;"
-            [style.background]="getCanSave() ? '#007bff' : '#6c757d'"
-            [style.opacity]="getCanSave() ? '1' : '0.6'">
+            [style.background]="canSave() ? '#007bff' : '#6c757d'"
+            [style.opacity]="canSave() ? '1' : '0.6'">
             {{ isSaving() ? 'Saving...' : 'Save All Changes' }}
           </button>
         </div>
@@ -322,24 +323,22 @@ export class DialogComponent implements OnInit, AfterViewInit {
   public readonly activeTabId = signal<string>('tab1');
   public readonly isSaving = signal(false);
   
-  // Expose tab references for template
-  public get tab1(): Tab1Component | undefined {
-    return this.tab1Ref;
-  }
-
-  public get tab2(): Tab2Component | undefined {
-    return this.tab2Ref;
-  }
-
-  // Simple methods instead of broken computed signals
-  public getChangesCount(): number {
+  // Private signal to track when ViewChild refs are ready
+  private readonly _tabsReady = signal(false);
+  
+  // Computed signals that wait for ViewChild to be ready
+  public readonly tabsWithChangesCount = computed(() => {
+    if (!this._tabsReady()) return 0; // Wait until ViewChild is ready
+    
     let count = 0;
     if (this.tab1Ref?.hasChanges()) count++;
     if (this.tab2Ref?.hasChanges()) count++;
     return count;
-  }
+  });
 
-  public getCanSave(): boolean {
+  public readonly canSave = computed(() => {
+    if (!this._tabsReady()) return false; // Wait until ViewChild is ready
+    
     const tab1HasChanges = this.tab1Ref?.hasChanges() ?? false;
     const tab2HasChanges = this.tab2Ref?.hasChanges() ?? false;
     const tab1IsValid = this.tab1Ref?.isValid() ?? true;
@@ -356,6 +355,15 @@ export class DialogComponent implements OnInit, AfterViewInit {
     if (tab2HasChanges && !tab2IsValid) return false;
     
     return true;
+  });
+  
+  // Expose tab references for template
+  public get tab1(): Tab1Component | undefined {
+    return this.tab1Ref;
+  }
+
+  public get tab2(): Tab2Component | undefined {
+    return this.tab2Ref;
   }
   
   // Fix the timing issue in getAllTabs
@@ -372,8 +380,11 @@ export class DialogComponent implements OnInit, AfterViewInit {
   }
   
   ngAfterViewInit() {
-    // Load sample data after view is initialized
+    // Load sample data first
     this.loadSampleData();
+    
+    // CRITICAL: Signal that tabs are ready - this triggers computed signal re-evaluation
+    this._tabsReady.set(true);
   }
   
   private loadSampleData() {
@@ -392,7 +403,7 @@ export class DialogComponent implements OnInit, AfterViewInit {
   }
   
   public async onSave() {
-    if (!this.getCanSave()) {
+    if (!this.canSave()) {
       return;
     }
     
@@ -418,7 +429,7 @@ export class DialogComponent implements OnInit, AfterViewInit {
   }
   
   public onClose() {
-    const hasUnsavedChanges = this.getChangesCount() > 0;
+    const hasUnsavedChanges = this.tabsWithChangesCount() > 0;
     if (hasUnsavedChanges) {
       if (confirm('You have unsaved changes. Are you sure you want to close?')) {
         console.log('Dialog closed with unsaved changes');

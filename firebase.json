@@ -1,6 +1,6 @@
 {
   "hosting": {
-    "public": "public",
+    "public": "dist/angular-tabbed-dialog-test/browser",
     "ignore": [
       "firebase.json",
       "**/.*",

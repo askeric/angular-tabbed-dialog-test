@@ -1,72 +1,46 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators, AbstractControl, ValidationErrors } from '@angular/forms';
 import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
 
+// Custom validator for future date
+function futureDate(control: AbstractControl): ValidationErrors | null {
+  if (!control.value) return null;
+  const inputDate = new Date(control.value);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Reset time to compare just dates
+  return inputDate > today ? null : { futureDate: true };
+}
 
 @Component({
   selector: 'app-tab2',
   templateUrl: 'tab2.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, ReactiveFormsModule]
 })
 export class Tab2Component implements IEditDispatchOrderTab {
-  private readonly originalField3 = signal('');
-  private readonly originalField4 = signal('');
+  public readonly form: FormGroup;
+  private originalValue: Record<string, any> = {};
+
+  // SCALABLE - works with any number of fields automatically!
+  readonly hasChanges = computed(() => {
+    const current = this.form.value as Record<string, any>;
+    return Object.keys(current).some(key => current[key] !== this.originalValue[key]);
+  });
   
-  public readonly field3 = signal('');
-  public readonly field4 = signal('');
-  
-  public readonly field3Error = signal<string | null>(null);
-  public readonly field4Error = signal<string | null>(null);
-  
-  readonly hasChanges = computed(() => 
-    this.field3() !== this.originalField3() ||
-    this.field4() !== this.originalField4()
-  );
-  
-  readonly isValid = computed(() => 
-    !this.field3Error() && !this.field4Error()
-  );
-  
-  constructor() {
-    effect(() => {
-      const value = this.field3();
-      if (!value.trim()) {
-        this.field3Error.set('Field 3 is required');
-      } else if (value.length < 10) {
-        this.field3Error.set('Field 3 must be at least 10 characters');
-      } else {
-        this.field3Error.set(null);
-      }
+  readonly isValid = computed(() => this.form.valid);
+
+  constructor(private fb: FormBuilder) {
+    this.form = this.fb.group({
+      field3: ['', [Validators.required, Validators.minLength(10)]],
+      field4: ['', [Validators.required, futureDate]]
     });
-    
-    effect(() => {
-      const value = this.field4();
-      if (!value) {
-        this.field4Error.set('Field 4 is required');
-      } else if (new Date(value) <= new Date()) {
-        this.field4Error.set('Field 4 must be in the future');
-      } else {
-        this.field4Error.set(null);
-      }
-    });
-  }
-  
-  public onField3Change(event: Event) {
-    const value = (event.target as HTMLTextAreaElement).value;
-    this.field3.set(value);
-  }
-  
-  public onField4Change(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.field4.set(value);
   }
   
   public loadData(field3: string, field4: string) {
-    this.originalField3.set(field3);
-    this.originalField4.set(field4);
-    this.field3.set(field3);
-    this.field4.set(field4);
+    const data = { field3, field4 };
+    this.form.patchValue(data);
+    this.originalValue = { ...data };
   }
   
   public async save(): Promise<void> {
@@ -74,14 +48,9 @@ export class Tab2Component implements IEditDispatchOrderTab {
       throw new Error('Cannot save invalid data');
     }
     
-    console.log('Saving Tab2:', {
-      field3: this.field3(),
-      field4: this.field4()
-    });
-    
+    console.log('Saving Tab2:', this.form.value);
     await new Promise(resolve => setTimeout(resolve, 800));
     
-    this.originalField3.set(this.field3());
-    this.originalField4.set(this.field4());
+    this.originalValue = { ...this.form.value };
   }
 }

@@ -1,74 +1,39 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, effect, signal } from '@angular/core';
+import { Component, computed } from '@angular/core';
+import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { IEditDispatchOrderTab } from '../../interface/IEditDispatchOrderTab';
 
 @Component({
   selector: 'app-tab1',
   templateUrl: 'tab1.html',
   standalone: true,
-  imports: [CommonModule]
+  imports: [CommonModule, ReactiveFormsModule]
 })
 export class Tab1Component implements IEditDispatchOrderTab {
-  // Original values (set when tab initializes)
-  private readonly originalField1 = signal('');
-  private readonly originalField2 = signal('');
+  public readonly form: FormGroup;
+  private originalValue: Record<string, any> = {};
+
+  // SCALABLE - works with any number of fields automatically!
+  readonly hasChanges = computed(() => {
+    const current = this.form.value as Record<string, any>;
+    return Object.keys(current).some(key => current[key] !== this.originalValue[key]);
+  });
   
-  // Current form values
-  public readonly field1 = signal('');
-  public readonly field2 = signal('');
-  
-  // Validation errors
-  public readonly field1Error = signal<string | null>(null);
-  public readonly field2Error = signal<string | null>(null);
-  
-  // Interface implementation
-  readonly hasChanges = computed(() => 
-    this.field1() !== this.originalField1() ||
-    this.field2() !== this.originalField2()
-  );
-  
-  readonly isValid = computed(() => 
-    !this.field1Error() && !this.field2Error()
-  );
-  
-  constructor() {
-    // Set up continuous validation
-    effect(() => {
-      const value = this.field1();
-      if (!value.trim()) {
-        this.field1Error.set('Field 1 is required');
-      } else if (value.length < 3) {
-        this.field1Error.set('Field 1 must be at least 3 characters');
-      } else {
-        this.field1Error.set(null);
-      }
+  readonly isValid = computed(() => this.form.valid);
+
+  constructor(private fb: FormBuilder) {
+    // Create form in constructor after fb is available
+    this.form = this.fb.group({
+      field1: ['', [Validators.required, Validators.minLength(3)]],
+      field2: ['', Validators.required]
+      // Add 100 more fields here - everything still scales!
     });
-    
-    effect(() => {
-      const value = this.field2();
-      if (!value.trim()) {
-        this.field2Error.set('Field 2 is required');
-      } else {
-        this.field2Error.set(null);
-      }
-    });
-  }
-  
-  public onField1Change(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.field1.set(value);
-  }
-  
-  public onField2Change(event: Event) {
-    const value = (event.target as HTMLInputElement).value;
-    this.field2.set(value);
   }
   
   public loadData(field1: string, field2: string) {
-    this.originalField1.set(field1);
-    this.originalField2.set(field2);
-    this.field1.set(field1);
-    this.field2.set(field2);
+    const data = { field1, field2 };
+    this.form.patchValue(data);
+    this.originalValue = { ...data };
   }
   
   public async save(): Promise<void> {
@@ -76,15 +41,9 @@ export class Tab1Component implements IEditDispatchOrderTab {
       throw new Error('Cannot save invalid data');
     }
     
-    console.log('Saving Tab1:', {
-      field1: this.field1(),
-      field2: this.field2()
-    });
-    
+    console.log('Saving Tab1:', this.form.value);
     await new Promise(resolve => setTimeout(resolve, 1000));
     
-    // Update original values after successful save
-    this.originalField1.set(this.field1());
-    this.originalField2.set(this.field2());
+    this.originalValue = { ...this.form.value };
   }
 }

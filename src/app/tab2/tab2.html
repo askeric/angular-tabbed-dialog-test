@@ -1,29 +1,33 @@
- <form>
-      <div class="form-group">
-        <label for="field3">Field 3</label>
-        <textarea 
-          id="field3" 
-          [value]="field3()"
-          (input)="onField3Change($event)"
-          [class.error]="field3Error()"
-          class="form-control"
-          rows="3"></textarea>
-        @if (field3Error()) {
-          <div class="error-message">{{ field3Error() }}</div>
-        }
-      </div>
-      
-      <div class="form-group">
-        <label for="field4">Field 4</label>
-        <input 
-          id="field4" 
-          type="date" 
-          [value]="field4()"
-          (input)="onField4Change($event)"
-          [class.error]="field4Error()"
-          class="form-control">
-        @if (field4Error()) {
-          <div class="error-message">{{ field4Error() }}</div>
-        }
-      </div>
-    </form>
+<form [formGroup]="form">
+  <div class="form-group">
+    <label for="field3">Field 3</label>
+    <textarea 
+      id="field3" 
+      formControlName="field3"
+      [class.error]="form.get('field3')?.invalid && form.get('field3')?.touched"
+      class="form-control"
+      rows="3"></textarea>
+    @if (form.get('field3')?.errors?.['required'] && form.get('field3')?.touched) {
+      <div class="error-message">Field 3 is required</div>
+    }
+    @if (form.get('field3')?.errors?.['minlength'] && form.get('field3')?.touched) {
+      <div class="error-message">Field 3 must be at least 10 characters</div>
+    }
+  </div>
+  
+  <div class="form-group">
+    <label for="field4">Field 4</label>
+    <input 
+      id="field4" 
+      type="date" 
+      formControlName="field4"
+      [class.error]="form.get('field4')?.invalid && form.get('field4')?.touched"
+      class="form-control">
+    @if (form.get('field4')?.errors?.['required'] && form.get('field4')?.touched) {
+      <div class="error-message">Field 4 is required</div>
+    }
+    @if (form.get('field4')?.errors?.['futureDate'] && form.get('field4')?.touched) {
+      <div class="error-message">Field 4 must be in the future</div>
+    }
+  </div>
+</form>

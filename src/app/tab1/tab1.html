@@ -1,29 +1,28 @@
-    <form>
-      <div class="form-group">
-        <label for="field1">Field 1</label>
-        <input 
-          id="field1" 
-          type="text" 
-          [value]="field1()"
-          (input)="onField1Change($event)"
-          [class.error]="field1Error()"
-          class="form-control">
-        @if (field1Error()) {
-          <div class="error-message">{{ field1Error() }}</div>
-        }
-      </div>
-      
-      <div class="form-group">
-        <label for="field2">Field 2</label>
-        <input 
-          id="field2" 
-          type="text" 
-          [value]="field2()"
-          (input)="onField2Change($event)"
-          [class.error]="field2Error()"
-          class="form-control">
-        @if (field2Error()) {
-          <div class="error-message">{{ field2Error() }}</div>
-        }
-      </div>
-    </form>
+<form [formGroup]="form">
+  <div class="form-group">
+    <label for="field1">Field 1</label>
+    <input 
+      id="field1" 
+      formControlName="field1"
+      [class.error]="form.get('field1')?.invalid && form.get('field1')?.touched"
+      class="form-control">
+    @if (form.get('field1')?.errors?.['required'] && form.get('field1')?.touched) {
+      <div class="error-message">Field 1 is required</div>
+    }
+    @if (form.get('field1')?.errors?.['minlength'] && form.get('field1')?.touched) {
+      <div class="error-message">Field 1 must be at least 3 characters</div>
+    }
+  </div>
+  
+  <div class="form-group">
+    <label for="field2">Field 2</label>
+    <input 
+      id="field2" 
+      formControlName="field2"
+      [class.error]="form.get('field2')?.invalid && form.get('field2')?.touched"
+      class="form-control">
+    @if (form.get('field2')?.errors?.['required'] && form.get('field2')?.touched) {
+      <div class="error-message">Field 2 is required</div>
+    }
+  </div>
+</form>

@@ -35,6 +35,7 @@ export class DialogComponent implements OnInit, AfterViewInit {
   public readonly canSave = computed(() => {
     if (!this._tabsReady()) return false; // Wait until ViewChild is ready
     
+    // TODO: make these arrays
     const tab1HasChanges = this.tab1Ref?.hasChanges() ?? false;
     const tab2HasChanges = this.tab2Ref?.hasChanges() ?? false;
     const tab1IsValid = this.tab1Ref?.isValid() ?? true;
@@ -62,10 +63,8 @@ export class DialogComponent implements OnInit, AfterViewInit {
     return this.tab2Ref;
   }
   
-  // Fix the timing issue in getAllTabs
   private getAllTabs(): IEditDispatchOrderTab[] {
     const tabs: IEditDispatchOrderTab[] = [];
-    // Add null checks to handle timing before ViewChild is set
     if (this.tab1Ref) tabs.push(this.tab1Ref);
     if (this.tab2Ref) tabs.push(this.tab2Ref);
     return tabs;
@@ -79,7 +78,6 @@ export class DialogComponent implements OnInit, AfterViewInit {
     // Load sample data first
     this.loadSampleData();
     
-    // CRITICAL: Signal that tabs are ready - this triggers computed signal re-evaluation
     this._tabsReady.set(true);
   }
   
